@@ -739,7 +739,22 @@ updateMenu(); updateHUD(); updateUndo(); show('menu'); setControlsVisible(false)
 /* DEV helpers */
 window._S = S;
 window._lvl = (i)=>startLevel(i);
-window._win = ()=>{ S.tubes = LEVELS[S.currentLevel].tubes.map(t=>t.slice()); /* not auto-solve */ };
+
+/* Screenshot hook (harmless dev aid): ?shot=scene[:level] drives a state for capture */
+(function(){
+  const shot = new URLSearchParams(location.search).get('shot');
+  if(!shot) return;
+  const [scene, arg] = shot.split(':'); const li = (parseInt(arg||'1',10)-1)||0;
+  setTimeout(()=>{
+    if(scene==='menu'){ updateMenu(); show('menu'); }
+    else if(scene==='select'){ buildLevelGrid(); show('select'); }
+    else if(scene==='play'){ startLevel(li); }
+    else if(scene==='sel'){ startLevel(li); S.selected=0; }
+    else if(scene==='pause'){ startLevel(li); S.mode='paused'; show('pause'); }
+    else if(scene==='how'){ show('how'); }
+    else if(scene==='win'){ startLevel(li); S.pours=LEVELS[li].optimal; setTimeout(()=>levelWin(),60); }
+  }, 300);
+})();
 </script>
 </body>
 </html>

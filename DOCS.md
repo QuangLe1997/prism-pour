@@ -1,330 +1,230 @@
 # 🌈 PRISM POUR — Water Sort Puzzle
 
-**Status:** In Development · Single `index.html` · Mobile-first portrait (480px) · Zero-build · GitHub Pages
+**Status:** ✅ Live · Single `index.html` · Mobile-first portrait (480px) · Zero-build · GitHub Pages
+**Live:** https://quangle1997.github.io/prism-pour/ · **Accent:** `#39e0c8` (teal) · **Layout:** Mobile-frame A
 
-> A meditative water-sort puzzle where players tap & pour colored liquids into matching tubes. Fewer pours = more stars. Perfect for relaxation with handcrafted levels and smooth animations.
-
----
-
-## §0 Game Overview & Status
-
-| Feature | Status | Notes |
-|---------|--------|-------|
-| Core mechanic (tap-to-pour) | ✅ | Canvas-based, smooth interaction |
-| 20 handcrafted levels | ✅ | Levels 1–20 with increasing difficulty |
-| Star rating system | ✅ | Based on pour count vs. optimal |
-| Undo & Restart buttons | ✅ | Pause menu integration |
-| Level select screen | ✅ | Shows stars earned per level |
-| Audio (WebAudio synth) | ✅ | Select, pour, illegal, solve, level-win |
-| Haptic feedback (mobile) | ✅ | Configurable in pause menu |
-| localStorage persistence | ✅ | Saves stars, best record, settings |
-| OG/social card | 🔄 | Pending generation (media-tools) |
+> Tap a tube, tap another, pour the top color across. Sort every tube to one solid color. Fewer pours = more stars. 20 handcrafted, **solver-verified** levels with a realistic tilting-pour animation and a PRISM wildcard twist.
 
 ---
 
-## §1 Market Context & Design Rationale
+## §0 Feature Status (grep map)
 
-**Research insights:**
-- Water sort puzzles remain popular on casual platforms (CrazyGames, Poki).
-- Players engage with puzzle games offering: clear progression, achievable difficulty ramps, instant feedback.
-- Neon/teal aesthetics resonate in arcade/casual web space.
-
-**Differentiator hook:**
-- **Star rating per level** (discrete feedback for optimization) — players naturally replay for 3-star clears.
-- **Smooth pour animation + satisfying SFX** — tactile, meditative gameplay.
-- **Discrete levels with handcrafted difficulty** — no infinite levels; focused curated experience.
-
-**Genre:** Casual puzzle · **Theme:** Neon arcade · **Accent color:** `#39e0c8` (teal) · **Layout:** Mobile-frame A (portrait 480px, desktop letterbox).
+| Feature | Status | Where in `index.html` |
+|---------|--------|-----------------------|
+| Core tap-to-pour | ✅ | `tryPour()`, `commitPour()`, `canPour()` |
+| Realistic tilting-pour animation | ✅ | `drawPourAnim()`, `drawStream()` |
+| 20 solver-verified levels | ✅ | `const LEVELS = [...]` |
+| Exact optimal pour counts | ✅ | each level's `optimal:` (from A* solver) |
+| Star rating (3/2/1) | ✅ | `levelWin()` |
+| Win detection (empty OR solved) | ✅ | `isWin()`, `isSolvedTube()` |
+| Undo (stack) | ✅ | `undoMove()`, `S.history` + on-screen button |
+| Restart level | ✅ | `restartLevel()` + on-screen button + pause menu |
+| Pour counter / target in HUD | ✅ | `updateHUD()`, `#pourChip` |
+| PRISM wildcard liquid | ✅ | `effMatch()`, `colorAt()` rainbow branch |
+| Two-row tube layout | ✅ | `layout()` |
+| Sparkle particles | ✅ | `spawnSparkle()`, `drawParticles()` |
+| Solved-tube glow | ✅ | `drawTubeAt()` pulse ring |
+| WebAudio synth + rising-pitch pour ladder | ✅ | `Audio.pourTick()` etc. |
+| Haptics | ✅ | `haptic()` |
+| localStorage stars + settings | ✅ | `Save`, `S.stars` |
+| Level select w/ stars + prism badge | ✅ | `buildLevelGrid()` |
+| Screenshot/dev hook | ✅ | `?shot=` parser (harmless dev aid) |
 
 ---
 
-## §2 Core Mechanic
+## §1 Market Context & Design
 
-**Core loop (1 sentence):**
-_Players select a tube, select a target tube, and pour the top color onto it (only onto empty or same color). Clear all tubes to one solid color = solve. Fewer pours = more stars._
+- **Genre:** Casual water-sort puzzle (evergreen on CrazyGames/Poki/app stores).
+- **Differentiator hook:** (1) **Star rating by pour-efficiency** drives replay for 3★; (2) **PRISM** wildcard liquid (rainbow) that matches/accepts any color — an extra planning layer.
+- **Theme:** Neon arcade · **Accent:** `#39e0c8` teal (unused before — confirmed in guide inventory).
+- **Layout strategy:** **A — Mobile-frame** (portrait, `max-width 480px`, letterbox on desktop). One layout for all screens.
+
+---
+
+## §2 Core Mechanic & Rules
+
+**Core loop (1 sentence):** _Tap a source tube then a target tube to pour the top color; pour is legal only onto an empty tube or a matching top color (with room); sort every tube to one solid color to win, in as few pours as possible._
 
 **Rules:**
-1. **Tap a tube** → it glows (selection).
-2. **Tap another tube** → attempt pour.
-3. **Pour is legal if:**
-   - Source tube has liquid (not empty).
-   - Target tube is not full.
-   - Target is empty OR top color matches source top color.
-4. **Pour amount:** All top-layer colors of the same type in source (up to space in target).
-5. **Tube solved:** Single color, full (4 units).
-6. **Level won:** All tubes solved.
-7. **Undo:** Revert last pour (accessible during play via dev helper or in-game menu).
+1. Tap a non-empty tube → it **lifts and glows** (selected).
+2. Tap another tube → attempt pour. Tap the same tube again → deselect.
+3. **A pour is legal iff:** source non-empty **and** target not full **and** (target empty **or** top colors match — see PRISM below).
+4. **Amount poured:** the whole contiguous run of the same top color in the source, up to the space left in the target.
+5. **Tube solved:** full (4 units) and all units one color (PRISM units count as wildcard filler).
+6. **Level won:** every tube is **empty OR solved**. *(This was the v1 bug — empty tubes used to block the win.)*
+7. **PRISM (🌈):** a rainbow liquid unit. It matches **any** color, so it can be poured onto anything and anything can be poured onto it — a flexible buffer. It counts as "matching" for the solved check.
+
+**Tube capacity:** `CAP = 4`.
 
 ---
 
-## §3 Input & Interaction
+## §3 Input
 
-| Input | Action | Notes |
-|-------|--------|-------|
-| **Touch / Pointer** (canvas) | Tap tube index (1–N) to select/pour | Mobile-first |
-| **Keyboard** | `Esc` = pause/resume |
-| **Keyboard** | `U` = undo (dev helper) |
+| Input | Action |
+|-------|--------|
+| Tap / pointer on a tube | select / pour / deselect |
+| On-screen **Undo** button | revert last pour |
+| On-screen **Restart** button | reset current level |
+| `Esc` | pause / resume |
+| `U` or `Z` | undo · `R` | restart (keyboard shortcuts) |
 
----
-
-## §4 Audio & Juice
-
-**SFX (WebAudio synth — no external files):**
-- `select`: 600 Hz sine, 80 ms (tube selection glow)
-- `pour`: 880→1100→1400 Hz sine rising ladder, 120 ms each (satisfying cascade)
-- `illegal`: 200 Hz sine, 120 ms (feedback on failed move)
-- `solve`: 1100 Hz sine, 200 ms (tube completes)
-- `levelWin`: [523, 659, 784, 1046] Hz sine ladder, 150 ms each, 80 ms apart (victory chime)
-
-**Haptic (mobile):**
-- Select: 8 ms
-- Pour: 10 ms
-- Illegal: 30 ms
-- Solve: [20, 10, 20] ms (pattern)
-- Level complete: [20, 30, 20, 30, 40] ms (celebration)
-
-**Visual juice:**
-- **Tube glow:** Selected tube fills with cyan (`#39e0c8`), 0.4 opacity.
-- **Liquid shadow:** Each color has glow shadow (12 px blur) matching its hue.
-- **Solved glow:** Completed tube gets cyan stroke + shadow (20 px).
-- **Liquid animation:** Pour is instant (could upgrade to smooth animation later).
+Input is **locked during a pour animation** to prevent mid-animation state corruption.
 
 ---
 
-## §5 Level Structure
+## §4 Animation & Juice
 
-**20 handcrafted levels** defined in `LEVELS` array. Each level specifies:
-- `colors`: Array of color hex codes used in this level.
-- `tubes`: Array of tube arrays (each tube = array of color strings, bottom to top).
-- `optimal`: Target pour count for 3 stars.
-- `name`: Level display name (e.g., "Tutorial 1", "Challenge").
+**Realistic tilting-pour animation** (`drawPourAnim`):
+- **Lift** (200 ms): the source tube rises and swings toward the target, pivoting around its spout corner; rotation eases in (`easeInOut`).
+- **Pour** (≈150 ms × units, min 220 ms): the tube holds at a ~57° tilt; a glowing **liquid stream** (`drawStream`, quadratic curve + droplet) flows from the spout to the target's surface; the target fills **unit-by-unit** while the source drains.
+- **Return** (200 ms): the tube swings back and untilts.
+- The whole thing commits to real state only at the end (`commitPour`), so Undo/animation never desync.
 
-**Tube capacity:** 4 units max.
+**Audio (WebAudio synth, no files):**
+- `pourTick`: a **rising pitch ladder** — pitch climbs with each unit landed (520 Hz base × up to ~0.9 octave).
+- `select` 640 Hz · `illegal` low saw 150 Hz · `solve` 784→1047→1319 Hz · `win` C-E-G-C-E arpeggio.
 
-**Difficulty progression:**
-| Level | Colors | Tubes | Stacks | Theme | Optimal Pours |
-|-------|--------|-------|--------|-------|---------------|
-| 1–3 | 3 | 4 | Shallow (≤2 deep) | Tutorial | 3–5 |
-| 4–8 | 4–5 | 5–6 | Medium (3–4 deep) | Warmup | 6–10 |
-| 9–15 | 5–6 | 6–7 | Deep (3–4 full tubes) | Challenge | 11–16 |
-| 16–20 | 6 | 8 | Complex (multiple full) | Mastery | 17–19 |
+**Haptics:** select 6 ms · pour 8 ms/unit · illegal 30 ms · solve `[14,8,14]` · win `[20,30,20,30,50]`.
 
-**How to add a new level:**
-1. Open `DOCS.md` §5 and note the last level's optimal.
-2. In `index.html`, find `const LEVELS = [...]`.
-3. Add new object at the end:
-   ```javascript
-   { colors:['#FF6B9D', '#FFA500', '#00D9FF', '#39E0C8'], tubes:[['#FF6B9D','#FFA500'],['#FF6B9D'],['#FFA500'],['#00D9FF']], optimal:5, name:'My Level' },
-   ```
-   - Ensure `tubes` has the right capacity distribution.
-   - Set `optimal` to the theoretical minimum pours to solve.
-4. Test in browser: `startLevel(<index>)` from dev console.
-5. Update `DOCS.md` this section + level count in overview.
-6. Commit + push.
+**Visual juice:** selected-tube lift + teal glow ring · per-color glossy gradient + meniscus highlight · solved-tube **pulsing** glow ring · **sparkle particles** on each solve and on level win · rainbow shimmer on PRISM units.
+
+---
+
+## §5 Level Structure ⭐ (the important part)
+
+**20 handcrafted levels** live in the `LEVELS` array. Each entry:
+
+```js
+{ name:'First Drops', optimal:7, prism:false,
+  tubes:[ ["#FF5A6A","#FFE45A","#FFE45A","#FF5A6A"], ["#FFE45A","#FFA500","#FFA500","#FF5A6A"],
+          ["#FFA500","#FFA500","#FFE45A","#FF5A6A"], [], [] ] }
+```
+
+- `tubes`: array of tubes; each tube is an array of color hex strings **bottom→top** (`"*"` = PRISM). Empty tube = `[]`.
+- `optimal`: **exact minimum pours** to solve (computed by the A* solver in `tools/gen.mjs`) → the 3★ threshold.
+- `prism`: whether the level contains PRISM units.
+
+**Invariant (must hold for every level):** each color appears a multiple of `CAP` (4) times, and the start state is solvable. Both are checked by `tools/verify.mjs`.
+
+**Level table (as shipped):**
+
+| # | Name | Tubes | Colors | Prism | Optimal (3★) |
+|---|------|:----:|:-----:|:----:|:----:|
+| 1 | First Drops | 5 | 3 | – | 7 |
+| 2 | Easy Flow | 5 | 3 | – | 9 |
+| 3 | Tight Trio | 4 | 3 | – | 6 |
+| 4 | Four Hues | 6 | 4 | – | 12 |
+| 5 | Color Mix | 6 | 4 | – | 12 |
+| 6 | Packed Four | 5 | 4 | – | 9 |
+| 7 | Five Alive | 7 | 5 | – | 15 |
+| 8 | Spectrum | 7 | 5 | – | 16 |
+| 9 | Squeeze | 6 | 5 | – | 12 |
+| 10 | Prism Intro | 7 | 4+🌈 | ✅ | 15 |
+| 11 | Six Shades | 8 | 6 | – | 18 |
+| 12 | Rainbow | 8 | 6 | – | 18 |
+| 13 | Dense Six | 7 | 6 | – | 16 |
+| 14 | Prism Flow | 8 | 5+🌈 | ✅ | 17 |
+| 15 | Chromatic | 8 | 6 | – | 17 |
+| 16 | Seven Seas | 9 | 7 | – | 23 |
+| 17 | Compact | 7 | 6 | – | 19 |
+| 18 | Prism Path | 7 | 5+🌈 | ✅ | 20 |
+| 19 | Prism Master | 9 | 6+🌈 | ✅ | 18 |
+| 20 | Zenith | 9 | 7 | – | 21 |
+
+**Difficulty curve:** colors 3→7, tube count 4→9, empties shrink (2→1) to tighten the puzzle, PRISM introduced at L10 and reused on L14/18/19. Layout auto-switches to **two rows** when a level has >5 tubes.
 
 ---
 
 ## §6 Difficulty Scaling
 
-**No dynamic difficulty.** Difficulty is **level-progression only**: later levels have more colors, tubes, and deeper stacks.
-
-**Balance tuning:**
-- **Accessible:** Levels 1–5 teach the mechanic gently.
-- **Ramp:** Levels 6–12 introduce complexity (more colors, tube management).
-- **Expert:** Levels 13–20 are optimization puzzles (multi-pour sequences, tight packing).
+No dynamic/runtime difficulty — progression is **level-by-level only**. Later levels add colors, tubes and deeper mixing; fewer empty buffers raise the planning load. The A*-computed `optimal` keeps 3★ honest and fair per level.
 
 ---
 
 ## §7 Scoring & Progression
 
-**Star rating per level:**
-- ⭐⭐⭐ (3 stars): Pours ≤ `level.optimal`
-- ⭐⭐ (2 stars): Pours ≤ `level.optimal × 1.3` (rounded up)
-- ⭐ (1 star): Pours > `level.optimal × 1.3`
+**Stars per level (`levelWin`):**
+- ⭐⭐⭐ — `pours <= optimal`
+- ⭐⭐ — `pours <= ceil(optimal * 1.3)`
+- ⭐ — otherwise
 
-**Persistence:**
-- **Best stars per level:** Stored in `localStorage['prismPour.stars']` as array of integers.
-- **Total stars:** Sum of all earned stars (max 60).
-- **Levels completed:** Count of levels with ≥1 star.
-
-**No combo/multiplier system.** Score is implicit (star count).
+**Persistence:** best stars per level in `localStorage['prismPour.stars']` (array of ints). Menu shows levels-solved and total stars (max `20 × 3 = 60`). No combo/score number — the star count *is* the score.
 
 ---
 
 ## §8 UI Flows
 
-### Main menu
-- Game title + pitch
-- "Play" button → shows "How to Play" overlay on first run, then level select on repeat
-- "How to play" button → manual overlay
-- Stats: levels completed, total stars
-
-### Level select
-- 4-column grid of level cards (1–20)
-- Each card shows: level number + star count
-- Tap card → start level
-- "Back" → return to menu
-
-### During level
-- **HUD:** Level number (top-left), mute button (top-right), pause button
-- **Canvas:** Tube visuals with selection highlight
-- **Tap interaction:** Select → glow, tap again to pour or deselect
-
-### Pause menu
-- Resume / Restart Level / Quit to Menu
-- Toggles: Music, Sound FX, Haptics
-
-### Level complete overlay
-- Star display (⭐⭐⭐)
-- "Pours" stat
-- "Best" stat (optimal)
-- "Next Level" button (or back to menu if last level)
-- "Retry" button
+Menu → (first run: How-to) → **Level Select** (grid of 20, stars + 🌈 prism badge) → **Gameplay** → **Level Complete** (stars, your pours, 3★ target, Next/Retry). In-game: top-left Level+name chip, top-right pour-counter chip + mute + pause; bottom **Undo / Restart** bar. **Pause** menu: Resume / Restart / Quit + Music/SFX/Haptics toggles.
 
 ---
 
 ## §9 Mobile & Responsive
 
-**Layout strategy:** Mobile-frame A (portrait 480px, letterboxed on desktop).
-- Fixed width `480px`, centered, max-height 100vh.
-- No responsive columns/wraps — single layout for all screens.
-- Safe-area inset support for notches/home indicator.
-
-**Touch handling:**
-- `pointerdown` on canvas for tap detection.
-- No tap-leak (overlay.hidden * { pointer-events:none }).
-- iOS audio: `Audio.ensure()` called in gestures to unblock audio context.
+Mobile-frame A: fixed `min(100vw,480px)`, `100dvh`, centered, safe-area insets. Single layout for phone + desktop (desktop = centered phone with letterbox). Touch via `pointerdown`; generous hit padding; overlays use `pointer-events:none` when hidden (no tap-leak); audio context resumed inside the first gesture (iOS-safe).
 
 ---
 
-## §10 Technical Stack
+## §10 Tech
 
-| Component | Tech | Notes |
-|-----------|------|-------|
-| **View** | Single `index.html` | No framework, no build |
-| **Canvas** | 2D Canvas API | `getContext('2d')` |
-| **Audio** | WebAudio synth | Oscillators + gain envelope |
-| **Input** | Touch + Pointer events | Mobile + desktop |
-| **Storage** | localStorage (JSON) | Namespace: `prismPour.*` |
-| **Fonts** | Google Fonts (Orbitron, Space Grotesk) | CDN preconnect |
-| **Deploy** | GitHub Pages | Branch `main`, folder `/` |
+Pure vanilla HTML5 + Canvas 2D + WebAudio + localStorage. No framework, no bundler, single self-contained `index.html`. Google Fonts (Orbitron + Space Grotesk) the only external resource. DPR capped at 2.
 
 ---
 
-## §11 Browser Compatibility
+## §14 Balance Numbers (single source of truth)
 
-- **Desktop:** Chrome, Firefox, Safari, Edge (all modern versions)
-- **Mobile:** iOS Safari 14+, Chrome Android, Samsung Internet
-- **Required:** ES6 modules (`type="module"`), Canvas 2D, WebAudio, localStorage
-
----
-
-## §12 Performance Budget
-
-- **Target FPS:** 60 desktop, 30+ mobile.
-- **DPR cap:** `Math.min(devicePixelRatio, 2)` to prevent over-rendering.
-- **Memory:** Single array of tubes + history stack (minimal).
-- **Bundle:** Single HTML file (self-contained, no external JS deps).
-
----
-
-## §13 Accessibility
-
-- **Colorblind support:** Consider adding pattern fills in future (e.g., diagonal lines on tubes).
-- **Haptics toggle:** On/off in pause menu.
-- **Audio toggle:** Mute button + SFX/Music toggles.
-- **Font sizing:** `clamp()` for responsive typography.
-
----
-
-## §14 Balance Numbers (Single Source of Truth)
-
-**Constants & tuning:**
-
-```javascript
-const TUBE_CAPACITY = 4;           // Liquid units per tube
-const LEVELS = [20 items];         // See §5
+```js
+const CAP = 4;          // units per tube
+const PRISM = '*';      // wildcard liquid
+// star thresholds (levelWin): 3★ pours<=optimal · 2★ pours<=ceil(optimal*1.3) · else 1★
+// animation timing: lift 200ms · pour max(220, units*150)ms · return 200ms
+// audio: pour base 520Hz climbing ~0.9 octave; solve 784/1047/1319; win C4 E4 G4 C5 E5
 ```
-
-**Star thresholds (computed in levelWin):**
-```javascript
-const stars = pours <= optimal ? 3 : pours <= ceil(optimal*1.3) ? 2 : 1;
-```
-
-**Audio frequencies (Hz):**
-- Select: 600
-- Pour: 880, 1100, 1400
-- Illegal: 200
-- Solve: 1100
-- Win: 523, 659, 784, 1046 (G4, E4, G4, C5 pentatonic-ish)
-
-**Haptic timing (ms):**
-- Tap: 8–10
-- Illegal: 30
-- Solve: [20,10,20]
-- Win: [20,30,20,30,40]
+All level data + `optimal` values live in `LEVELS`. **Do not** hardcode balance elsewhere.
 
 ---
 
 ## §15 How-To Recipes
 
-### Add a new level
-1. In `index.html`, find `const LEVELS = [...]`.
-2. Append new level object with `colors`, `tubes`, `optimal`, `name`.
-3. Test: navigate to that level in browser, play to verify solvability.
-4. Update `DOCS.md` §5 & §6 level table.
-5. Commit + push.
+### Add / edit a level (make this trivial)
+1. **Author it solvably.** The safe way is to let the generator do it: edit the `PLAN` array in `tools/gen.mjs` (set `colors`, `empties`, optional `prism:true`), then:
+   ```bash
+   node tools/gen.mjs 2>/dev/null   # prints a fresh, solvable LEVELS array with exact optimal
+   ```
+   Paste the new entry/array into `const LEVELS` in `index.html`.
+2. **Or hand-write** a level object `{name, optimal, prism, tubes}` — but you **must** keep the invariant: every color appears a multiple of 4 times.
+3. **Verify** before shipping:
+   ```bash
+   node tools/verify.mjs            # asserts solvable + win-detect + optimal exact + color counts
+   ```
+   It replays the A* solution through the real game logic and prints `PASS/FAIL` per level.
+4. Update the table in **§5** + the count in §0/README. Commit code + DOCS together.
 
-### Adjust star thresholds
-1. Edit `levelWin()` function, line with star computation.
-2. Update `DOCS.md` §7 threshold table.
-3. Test: play a level, check stars earned.
-4. Commit.
+### Change star strictness
+Edit the threshold in `levelWin()` and the formula in §7 + §14. Re-verify.
 
-### Change tube capacity
-1. Change `TUBE_CAPACITY` constant.
-2. Update all existing levels (careful!).
-3. Update `DOCS.md` §5, §7.
-4. Verify solvability of all levels.
-5. Commit.
+### Add a color
+Append a hex to the generator `PALETTE` (and use it in levels). Keep contrast high; update §5.
 
-### Add new audio SFX
-1. Edit `Audio.sfx(id)` object.
-2. Add new case with `this.note(freq, duration, type, gain)` calls.
-3. Call `Audio.sfx('newId')` from game logic where desired.
-4. Update `DOCS.md` §4.
-5. Commit.
-
-### Customize colors
-1. Edit level `colors` array or `--accent` in `<style>`.
-2. Update level `tubes` to use new hex codes.
-3. Test in browser (visual check).
-4. Commit.
+### Tune the pour animation
+Edit the `lift / pour / ret` ms in `tryPour()` (stored on `S.anim`) and the easing in `drawPourAnim()`. Keep input locked while `S.anim` is set.
 
 ---
 
-## §16 History & Updates
+## §16 History
 
-| Date | Version | Change |
-|------|---------|--------|
-| 2026-06-04 | 1.0 | Initial release: 20 levels, star system, audio, haptic, level select. |
-
----
-
-## §17 Known Limitations & Future Ideas
-
-**Current:**
-- Liquid pour is instant (no smooth animation).
-- No undo button in main UI (only dev console or pause menu).
-- No infinite/endless mode.
-
-**Future (post-release):**
-- Smooth pour animation (liquid flows).
-- Leaderboard (local top-10 all-time).
-- Daily challenges.
-- Prism tube mechanic (accepts any color).
-- Touch-and-drag pour gesture.
+| Date | Ver | Change |
+|------|-----|--------|
+| 2026-06-04 | 1.0 | Initial 20-level build (UI, audio, level select). |
+| 2026-06-04 | **1.1** | **Critical:** rebuilt all 20 levels via A* generator (v1 levels were unsolvable); **fixed win detection** (empty-or-solved). Added realistic **tilting-pour animation** + liquid stream, rising-pitch pour SFX, on-screen **Undo/Restart**, pour counter, **PRISM** wildcard mechanic, two-row layout, sparkle particles. Added `tools/gen.mjs` + `tools/verify.mjs`. |
 
 ---
 
-**Last updated:** 2026-06-04 · **Players:** 1 (single-player) · **Playtime:** 15–30 min per playthrough · **Audience:** Casual, all ages.
+## §17 Known Limitations & Ideas
+
+- Liquid stays axis-aligned to the tube during tilt (no separate gravity-leveled surface) — reads well with the stream + motion; a true leveled surface is a future polish.
+- Local-only progress (no cloud sync) — intentional for a casual single-player puzzle.
+- Future: smooth inter-level transitions, daily challenge, more PRISM variants, hint button.
+
+---
+
+**Last updated:** 2026-06-04 (v1.1) · single-player · ~20–30 min full run · all ages.
