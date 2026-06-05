@@ -4,10 +4,10 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
 <title>PRISM POUR — Water Sort Puzzle · Play Free</title>
-<meta name="description" content="Tap & pour colored liquids into matching tubes. A relaxing water-sort puzzle with star ratings and handcrafted levels." />
+<meta name="description" content="Tap & pour colored liquids into matching tubes. A relaxing water-sort puzzle with smooth pour animation, star ratings and 20 handcrafted levels." />
 <meta property="og:type" content="website" />
 <meta property="og:title" content="PRISM POUR — Water Sort Puzzle" />
-<meta property="og:description" content="Tap & pour colored liquids into matching tubes. A relaxing water-sort puzzle with star ratings and handcrafted levels." />
+<meta property="og:description" content="Tap & pour colored liquids into matching tubes. A relaxing water-sort puzzle with smooth pour animation, star ratings and 20 handcrafted levels." />
 <meta property="og:image" content="https://quangle1997.github.io/prism-pour/assets/og-card.jpg" />
 <meta property="og:image:width" content="1200" /><meta property="og:image:height" content="675" />
 <meta name="twitter:card" content="summary_large_image" />
@@ -44,47 +44,66 @@ body::before{ content:""; position:fixed; inset:-30%; z-index:-2; pointer-events
 canvas{ position:absolute; inset:0; width:100%; height:100%; display:block; }
 
 /* ---------- HUD ---------- */
-#hud{ position:absolute; inset:0; pointer-events:none; padding:env(safe-area-inset-top) 12px 0; }
+#hud{ position:absolute; inset:0; pointer-events:none; }
 .chip{ border:1px solid var(--line); background:linear-gradient(180deg,rgba(22,24,38,.72),rgba(12,13,22,.82));
   backdrop-filter:blur(14px); border-radius:14px; padding:8px 12px; font-family:var(--disp); font-weight:800; }
 #top{ position:absolute; top:calc(env(safe-area-inset-top) + 10px); left:10px; right:10px;
-  display:flex; gap:8px; align-items:center; justify-content:space-between; }
-#lvlChip{ font-size:16px; letter-spacing:.04em; }
-#lvlChip small{ display:block; font-family:var(--body); font-weight:500; font-size:9px; color:var(--mut); letter-spacing:.18em; }
-#starsChip{ font-size:14px; letter-spacing:.04em; }
+  display:flex; gap:8px; align-items:flex-start; justify-content:space-between; }
+#lvlChip{ font-size:15px; letter-spacing:.04em; line-height:1.15; }
+#lvlChip small{ display:block; font-family:var(--body); font-weight:500; font-size:9px; color:var(--mut); letter-spacing:.16em; text-transform:uppercase; margin-top:2px; }
+#pourChip{ font-size:14px; letter-spacing:.03em; text-align:right; line-height:1.15; }
+#pourChip small{ display:block; font-family:var(--body); font-weight:500; font-size:9px; color:var(--mut); letter-spacing:.16em; text-transform:uppercase; margin-top:2px; }
+#pourChip b{ color:var(--accent); }
 .icons{ display:flex; gap:8px; pointer-events:auto; }
-.icons button{ all:unset; cursor:pointer; width:40px; height:40px; display:grid; place-items:center;
-  border:1px solid var(--line); border-radius:12px; background:rgba(20,22,34,.7); backdrop-filter:blur(14px); font-size:18px; }
+.icons button{ all:unset; cursor:pointer; width:38px; height:38px; display:grid; place-items:center;
+  border:1px solid var(--line); border-radius:12px; background:rgba(20,22,34,.7); backdrop-filter:blur(14px); font-size:17px; }
+
+/* bottom control bar (Undo / Restart) */
+#controls{ position:absolute; left:0; right:0; bottom:calc(env(safe-area-inset-bottom) + 14px);
+  display:flex; gap:10px; justify-content:center; pointer-events:none; }
+#controls button{ all:unset; cursor:pointer; pointer-events:auto; display:inline-flex; align-items:center; gap:8px;
+  padding:12px 20px; border:1px solid var(--line); border-radius:14px;
+  background:linear-gradient(180deg,rgba(22,24,38,.85),rgba(12,13,22,.92)); backdrop-filter:blur(14px);
+  font-family:var(--disp); font-weight:800; font-size:12px; letter-spacing:.1em; text-transform:uppercase; color:var(--ink); }
+#controls button:active{ transform:scale(.95); }
+#controls button:disabled{ opacity:.4; cursor:default; }
+#controls button .ic{ font-size:15px; color:var(--accent); }
 
 /* ---------- OVERLAYS ---------- */
 .overlay{ position:absolute; inset:0; display:grid; place-items:center; padding:24px;
-  background:radial-gradient(120% 120% at 50% 0%, rgba(8,9,16,.5), rgba(6,6,13,.9)); z-index:10; overflow-y:auto; }
+  background:radial-gradient(120% 120% at 50% 0%, rgba(8,9,16,.5), rgba(6,6,13,.92)); z-index:10; overflow-y:auto; }
 .overlay.hidden{ display:none; } .overlay.hidden *{ pointer-events:none; }
 .panel{ width:100%; max-width:360px; text-align:center; border:1px solid var(--line);
-  background:linear-gradient(180deg,rgba(22,24,38,.85),rgba(12,13,22,.92)); backdrop-filter:blur(14px);
+  background:linear-gradient(180deg,rgba(22,24,38,.9),rgba(12,13,22,.95)); backdrop-filter:blur(14px);
   border-radius:22px; padding:26px 22px; box-shadow:0 24px 60px -18px color-mix(in srgb,var(--accent) 45%,transparent); }
 h1{ font-family:var(--disp); font-weight:900; text-transform:uppercase; letter-spacing:.04em;
   font-size:clamp(30px,9vw,48px); line-height:1; margin-bottom:6px;
-  background:linear-gradient(95deg,#39e0c8,#56d4ff,var(--accent)); -webkit-background-clip:text; background-clip:text; color:transparent; }
+  background:linear-gradient(95deg,#39e0c8,#56d4ff,#c77dff,#ff6b9d); -webkit-background-clip:text; background-clip:text; color:transparent; }
 .kick{ font-family:var(--disp); font-weight:700; text-transform:uppercase; letter-spacing:.3em; font-size:11px; color:var(--mut); margin-bottom:18px; }
 .btn{ all:unset; cursor:pointer; display:block; width:100%; margin:10px 0; padding:15px; text-align:center;
   font-family:var(--disp); font-weight:800; text-transform:uppercase; letter-spacing:.12em; font-size:15px; border-radius:14px;
   background:linear-gradient(180deg,color-mix(in srgb,var(--accent) 85%,#fff 0%),color-mix(in srgb,var(--accent) 70%,#000 18%));
   color:#06120c; box-shadow:0 10px 26px -10px color-mix(in srgb,var(--accent) 70%,transparent); }
+.btn:active{ transform:translateY(1px); }
 .btn.ghost{ background:rgba(255,255,255,.05); color:var(--ink); border:1px solid var(--line); box-shadow:none; }
 .stat{ display:flex; justify-content:space-between; padding:9px 2px; border-bottom:1px solid var(--line); font-size:14px; }
 .stat b{ font-family:var(--disp); color:var(--accent); }
-.how{ text-align:left; color:var(--mut); font-size:14px; line-height:1.6; margin:8px 0 4px; }
+.how{ text-align:left; color:var(--mut); font-size:14px; line-height:1.65; margin:8px 0 4px; }
 .how b{ color:var(--ink); }
+.how .pz{ display:inline-block; width:18px; }
 
 /* Level Grid */
-.lvlGrid{ display:grid; grid-template-columns:repeat(4,1fr); gap:10px; margin:16px 0; max-height:50vh; overflow-y:auto; }
-.lvlCard{ border:1px solid var(--line); border-radius:12px; padding:12px; text-align:center; cursor:pointer;
-  background:rgba(255,255,255,.04); transition:.2s; }
-.lvlCard:hover{ background:rgba(255,255,255,.08); }
-.lvlCard.active{ background:var(--accent); color:#06120c; border-color:transparent; }
-.lvlCard .num{ font-family:var(--disp); font-weight:800; font-size:18px; }
-.lvlCard .stars{ font-size:12px; margin-top:4px; }
+.lvlGrid{ display:grid; grid-template-columns:repeat(4,1fr); gap:10px; margin:16px 0; max-height:52vh; overflow-y:auto; padding:2px; }
+.lvlCard{ position:relative; border:1px solid var(--line); border-radius:12px; padding:10px 6px; text-align:center; cursor:pointer;
+  background:rgba(255,255,255,.04); transition:.18s; }
+.lvlCard:hover{ background:rgba(255,255,255,.08); transform:translateY(-2px); }
+.lvlCard.locked{ opacity:.45; }
+.lvlCard .num{ font-family:var(--disp); font-weight:800; font-size:17px; }
+.lvlCard .stars{ font-size:10px; margin-top:3px; letter-spacing:-1px; }
+.lvlCard .pz{ position:absolute; top:3px; right:5px; font-size:10px; }
+
+/* Big stars on win */
+.bigstars{ font-size:44px; letter-spacing:4px; margin:4px 0 2px; min-height:54px; }
 
 /* Toggle switch */
 .toggle{ display:flex; align-items:center; justify-content:space-between; padding:11px 2px; font-size:14px; }
@@ -100,11 +119,19 @@ h1{ font-family:var(--disp); font-weight:900; text-transform:uppercase; letter-s
   <!-- HUD -->
   <div id="hud">
     <div id="top">
-      <div class="chip" id="lvlChip">1<small>LEVEL</small></div>
-      <div class="icons">
-        <button id="muteBtn" aria-label="Mute">🔊</button>
-        <button id="pauseBtn" aria-label="Pause">⏸</button>
+      <div class="chip" id="lvlChip">Level 1<small id="lvlName">First Drops</small></div>
+      <div style="display:flex; gap:8px; align-items:flex-start;">
+        <div class="chip" id="pourChip"><b>0</b> / <span id="targetPours">0</span><small>Pours · Best</small></div>
+        <div class="icons">
+          <button id="muteBtn" aria-label="Mute">🔊</button>
+          <button id="pauseBtn" aria-label="Pause">⏸</button>
+        </div>
       </div>
+    </div>
+    <!-- bottom controls -->
+    <div id="controls">
+      <button id="undoBtn"><span class="ic">↩</span> Undo</button>
+      <button id="restartBtn2"><span class="ic">⟳</span> Restart</button>
     </div>
   </div>
 
@@ -112,25 +139,25 @@ h1{ font-family:var(--disp); font-weight:900; text-transform:uppercase; letter-s
   <div class="overlay" id="menu">
     <div class="panel">
       <h1>PRISM POUR</h1>
-      <div class="kick">Water Sort Puzzle · part of QUANG ARCADE</div>
+      <div class="kick">Water Sort Puzzle · QUANG ARCADE</div>
       <button class="btn" id="playBtn">▶ Play</button>
       <button class="btn ghost" id="howBtn">How to play</button>
-      <div class="stat"><span>Levels</span><b id="menuLevels">0/20</b></div>
-      <div class="stat"><span>Total Stars</span><b id="menuStars">0</b></div>
+      <div class="stat"><span>Levels solved</span><b id="menuLevels">0/20</b></div>
+      <div class="stat"><span>Total stars</span><b id="menuStars">0 / 60</b></div>
     </div>
   </div>
 
   <!-- HOW TO PLAY -->
   <div class="overlay hidden" id="how">
     <div class="panel">
-      <h1 style="font-size:30px">How to play</h1>
+      <h1 style="font-size:28px">How to play</h1>
       <div class="how">
-        <p>💧 <b>Tap a tube</b> to select it (it glows).</p>
-        <p>👆 <b>Tap another tube</b> to pour the top layer into it.</p>
-        <p>💡 Pour only onto an <b>empty tube</b> or one with the <b>same color</b> on top.</p>
-        <p>🌈 A tube is solved when it's <b>one solid color, full</b>.</p>
-        <p>⭐ Fewer pours = more stars!</p>
-        <p>↩️ Tap <b>Undo</b> to revert, <b>Restart</b> to reset.</p>
+        <p><span class="pz">💧</span><b>Tap a tube</b> to pick it up (it lifts & glows).</p>
+        <p><span class="pz">👆</span><b>Tap another tube</b> to pour the top color across.</p>
+        <p><span class="pz">✅</span>Pour only onto an <b>empty tube</b> or a matching <b>same color</b> top.</p>
+        <p><span class="pz">🌈</span>A <b>PRISM</b> layer (rainbow) matches <b>any</b> color — handy buffer.</p>
+        <p><span class="pz">🏆</span>Fill every tube with one solid color to win.</p>
+        <p><span class="pz">⭐</span>Fewer pours = more stars. <b>Undo</b> & <b>Restart</b> anytime.</p>
       </div>
       <button class="btn" id="howOk">Got it</button>
     </div>
@@ -139,7 +166,7 @@ h1{ font-family:var(--disp); font-weight:900; text-transform:uppercase; letter-s
   <!-- LEVEL SELECT -->
   <div class="overlay hidden" id="select">
     <div class="panel">
-      <h1 style="font-size:34px">Levels</h1>
+      <h1 style="font-size:32px">Select Level</h1>
       <div class="lvlGrid" id="lvlGrid"></div>
       <button class="btn ghost" id="selectBack">Back</button>
     </div>
@@ -162,24 +189,49 @@ h1{ font-family:var(--disp); font-weight:900; text-transform:uppercase; letter-s
   <!-- LEVEL COMPLETE -->
   <div class="overlay hidden" id="levelcomplete">
     <div class="panel">
-      <h1 style="font-size:34px" id="compStars">⭐⭐⭐</h1>
-      <div class="kick">Level Complete</div>
-      <div class="stat"><span>Pours</span><b id="compPours">0</b></div>
-      <div class="stat"><span>Best</span><b id="compBest">0</b></div>
+      <div class="bigstars" id="compStars">⭐⭐⭐</div>
+      <div class="kick" id="compKick">Level Complete</div>
+      <div class="stat"><span>Your pours</span><b id="compPours">0</b></div>
+      <div class="stat"><span>Best (3★)</span><b id="compBest">0</b></div>
       <button class="btn" id="nextBtn">▶ Next Level</button>
-      <button class="btn ghost" id="retryBtn">Retry</button>
+      <button class="btn ghost" id="retryBtn">Retry for 3★</button>
     </div>
   </div>
 </div>
 
 <script type="module">
 /* ============================================================
-   PRISM POUR — Water Sort Puzzle Game
+   PRISM POUR — Water Sort Puzzle
    ============================================================ */
 
 const NS = 'prismPour';
 const $ = s => document.querySelector(s);
-const TUBE_CAPACITY = 4;
+const CAP = 4;                 // liquid units per tube
+const PRISM = '*';             // wildcard "prism" liquid
+
+/* ---------- LEVELS (generated + verified solvable; optimal = true minimum pours) ---------- */
+const LEVELS = [
+  /* 1 First Drops */ { name:'First Drops', optimal:7, prism:false, tubes:[["#FF5A6A","#FFE45A","#FFE45A","#FF5A6A"],["#FFE45A","#FFA500","#FFA500","#FF5A6A"],["#FFA500","#FFA500","#FFE45A","#FF5A6A"],[],[]] },
+  /* 2 Easy Flow */ { name:'Easy Flow', optimal:9, prism:false, tubes:[["#FF5A6A","#FFA500","#FFE45A","#FF5A6A"],["#FFA500","#FFE45A","#FFE45A","#FFA500"],["#FF5A6A","#FF5A6A","#FFE45A","#FFA500"],[],[]] },
+  /* 3 Tight Trio */ { name:'Tight Trio', optimal:6, prism:false, tubes:[["#FFE45A","#FFA500","#FFA500","#FF5A6A"],["#FFE45A","#FFA500","#FFE45A","#FFE45A"],["#FF5A6A","#FF5A6A","#FF5A6A","#FFA500"],[]] },
+  /* 4 Four Hues */ { name:'Four Hues', optimal:12, prism:false, tubes:[["#FF5A6A","#5BE58A","#FFE45A","#5BE58A"],["#FFA500","#FFE45A","#5BE58A","#FFE45A"],["#5BE58A","#FFA500","#FFE45A","#FF5A6A"],["#FFA500","#FF5A6A","#FF5A6A","#FFA500"],[],[]] },
+  /* 5 Color Mix */ { name:'Color Mix', optimal:12, prism:false, tubes:[["#FFE45A","#FFA500","#FFE45A","#FF5A6A"],["#5BE58A","#5BE58A","#5BE58A","#FF5A6A"],["#FF5A6A","#FFE45A","#FF5A6A","#FFA500"],["#FFA500","#5BE58A","#FFE45A","#FFA500"],[],[]] },
+  /* 6 Packed Four */ { name:'Packed Four', optimal:9, prism:false, tubes:[["#FFE45A","#FFE45A","#FFE45A","#FF5A6A"],["#FFA500","#FFA500","#5BE58A","#5BE58A"],["#5BE58A","#FF5A6A","#5BE58A","#FFA500"],["#FF5A6A","#FFA500","#FFE45A","#FF5A6A"],[]] },
+  /* 7 Five Alive */ { name:'Five Alive', optimal:15, prism:false, tubes:[["#FFE45A","#FFA500","#FF5A6A","#FF5A6A"],["#FFE45A","#5BE58A","#FFA500","#39E0C8"],["#39E0C8","#FFE45A","#FF5A6A","#39E0C8"],["#5BE58A","#FFA500","#FFA500","#39E0C8"],["#FFE45A","#FF5A6A","#5BE58A","#5BE58A"],[],[]] },
+  /* 8 Spectrum */ { name:'Spectrum', optimal:16, prism:false, tubes:[["#FFA500","#39E0C8","#FFE45A","#5BE58A"],["#FFE45A","#FFA500","#FF5A6A","#FFA500"],["#39E0C8","#5BE58A","#5BE58A","#FFE45A"],["#FFA500","#FF5A6A","#39E0C8","#FFE45A"],["#39E0C8","#FF5A6A","#5BE58A","#FF5A6A"],[],[]] },
+  /* 9 Squeeze */ { name:'Squeeze', optimal:12, prism:false, tubes:[["#FF5A6A","#FFE45A","#FF5A6A","#5BE58A"],["#FFA500","#39E0C8","#39E0C8","#FF5A6A"],["#FFE45A","#FFE45A","#FFE45A","#FF5A6A"],["#39E0C8","#FFA500","#5BE58A","#5BE58A"],["#FFA500","#FFA500","#5BE58A","#39E0C8"],[]] },
+  /* 10 Prism Intro */ { name:'Prism Intro', optimal:15, prism:true, tubes:[["*","#5BE58A","#5BE58A","#FF5A6A"],["#5BE58A","#FFE45A","#FF5A6A","#FFA500"],["#FFE45A","*","#FFE45A","#FFA500"],["*","#5BE58A","#FFA500","#FFE45A"],["#FFA500","*","#FF5A6A","#FF5A6A"],[],[]] },
+  /* 11 Six Shades */ { name:'Six Shades', optimal:18, prism:false, tubes:[["#56D4FF","#FFA500","#5BE58A","#FF5A6A"],["#FF5A6A","#5BE58A","#FF5A6A","#5BE58A"],["#FFA500","#39E0C8","#FFA500","#FFE45A"],["#56D4FF","#FFA500","#FFE45A","#39E0C8"],["#5BE58A","#FFE45A","#39E0C8","#39E0C8"],["#FF5A6A","#56D4FF","#56D4FF","#FFE45A"],[],[]] },
+  /* 12 Rainbow */ { name:'Rainbow', optimal:18, prism:false, tubes:[["#5BE58A","#FFE45A","#FF5A6A","#FFE45A"],["#5BE58A","#39E0C8","#FF5A6A","#FFA500"],["#FFE45A","#FF5A6A","#FFA500","#FFA500"],["#5BE58A","#FFA500","#5BE58A","#FFE45A"],["#56D4FF","#39E0C8","#39E0C8","#FF5A6A"],["#56D4FF","#56D4FF","#39E0C8","#56D4FF"],[],[]] },
+  /* 13 Dense Six */ { name:'Dense Six', optimal:16, prism:false, tubes:[["#FFE45A","#FFE45A","#FF5A6A","#FFE45A"],["#FF5A6A","#39E0C8","#39E0C8","#FFA500"],["#39E0C8","#FF5A6A","#56D4FF","#FFA500"],["#FFA500","#FFA500","#5BE58A","#39E0C8"],["#56D4FF","#5BE58A","#5BE58A","#56D4FF"],["#56D4FF","#FF5A6A","#FFE45A","#5BE58A"],[]] },
+  /* 14 Prism Flow */ { name:'Prism Flow', optimal:17, prism:true, tubes:[["*","#FFE45A","#FF5A6A","#5BE58A"],["#FFE45A","*","#5BE58A","#5BE58A"],["#39E0C8","#FF5A6A","*","#FFA500"],["#39E0C8","#5BE58A","*","#39E0C8"],["#FFA500","#FFE45A","#39E0C8","#FFA500"],["#FFE45A","#FF5A6A","#FF5A6A","#FFA500"],[],[]] },
+  /* 15 Chromatic */ { name:'Chromatic', optimal:17, prism:false, tubes:[["#FFA500","#FFE45A","#56D4FF","#39E0C8"],["#FFA500","#FFA500","#FF5A6A","#5BE58A"],["#FFE45A","#FFE45A","#56D4FF","#FF5A6A"],["#5BE58A","#5BE58A","#FF5A6A","#39E0C8"],["#5BE58A","#FFE45A","#39E0C8","#FFA500"],["#56D4FF","#39E0C8","#FF5A6A","#56D4FF"],[],[]] },
+  /* 16 Seven Seas */ { name:'Seven Seas', optimal:23, prism:false, tubes:[["#C77DFF","#5BE58A","#39E0C8","#FF5A6A"],["#C77DFF","#FFA500","#FFA500","#FFE45A"],["#39E0C8","#FFE45A","#C77DFF","#FFA500"],["#5BE58A","#39E0C8","#56D4FF","#FFA500"],["#FF5A6A","#FFE45A","#56D4FF","#FFE45A"],["#39E0C8","#56D4FF","#5BE58A","#FF5A6A"],["#5BE58A","#FF5A6A","#56D4FF","#C77DFF"],[],[]] },
+  /* 17 Compact */ { name:'Compact', optimal:19, prism:false, tubes:[["#5BE58A","#FFA500","#5BE58A","#56D4FF"],["#39E0C8","#56D4FF","#39E0C8","#FFA500"],["#FF5A6A","#FFE45A","#FF5A6A","#39E0C8"],["#FFE45A","#FF5A6A","#FFE45A","#5BE58A"],["#5BE58A","#FFE45A","#56D4FF","#FF5A6A"],["#39E0C8","#56D4FF","#FFA500","#FFA500"],[]] },
+  /* 18 Prism Path */ { name:'Prism Path', optimal:20, prism:true, tubes:[["*","*","#5BE58A","#FF5A6A"],["#39E0C8","#FFA500","#39E0C8","#5BE58A"],["*","#39E0C8","#5BE58A","#FFA500"],["#FFE45A","#FFE45A","#5BE58A","#FFE45A"],["#FFA500","#FF5A6A","*","#FF5A6A"],["#FF5A6A","#39E0C8","#FFE45A","#FFA500"],[]] },
+  /* 19 Prism Master */ { name:'Prism Master', optimal:18, prism:true, tubes:[["#FF5A6A","#39E0C8","#FFE45A","#FF5A6A"],["*","#5BE58A","#56D4FF","#56D4FF"],["#FFE45A","*","*","#5BE58A"],["*","#FF5A6A","#39E0C8","#39E0C8"],["#FFA500","#5BE58A","#5BE58A","#FFE45A"],["#FFA500","#56D4FF","#56D4FF","#FFA500"],["#39E0C8","#FFA500","#FF5A6A","#FFE45A"],[],[]] },
+  /* 20 Zenith */ { name:'Zenith', optimal:21, prism:false, tubes:[["#C77DFF","#C77DFF","#FF5A6A","#56D4FF"],["#39E0C8","#5BE58A","#FF5A6A","#39E0C8"],["#FFA500","#56D4FF","#FFE45A","#39E0C8"],["#5BE58A","#5BE58A","#56D4FF","#C77DFF"],["#5BE58A","#FFA500","#FFE45A","#FFA500"],["#FFE45A","#56D4FF","#FF5A6A","#C77DFF"],["#FFE45A","#39E0C8","#FFA500","#FF5A6A"],[],[]] },
+];
 
 /* ---------- SaveManager ---------- */
 const Save = {
@@ -195,402 +247,499 @@ const Settings = {
   save(){ Save.set('music',this.music); Save.set('sfx',this.sfx); Save.set('haptic',this.haptic); },
 };
 
-/* ---------- AudioManager ---------- */
+/* ---------- AudioManager (WebAudio synth) ---------- */
 const Audio = {
-  ctx:null, muted: Save.get('muted', false),
+  ctx:null, muted: Save.get('muted', false), musicGain:null, musicTimer:null,
   ensure(){ if(!this.ctx) this.ctx = new (window.AudioContext||window.webkitAudioContext)();
             if(this.ctx.state==='suspended') this.ctx.resume(); return this.ctx; },
-  note(f=440,d=.1,type='sine',g=.18){ if(this.muted||!Settings.sfx) return; const a=this.ensure();
-    const o=a.createOscillator(), gn=a.createGain(); o.type=type; o.frequency.value=f;
-    gn.gain.setValueAtTime(g,a.currentTime); gn.gain.exponentialRampToValueAtTime(.0001,a.currentTime+d);
-    o.connect(gn).connect(a.destination); o.start(); o.stop(a.currentTime+d); },
-  sfx(id){ ({
-    select:()=>this.note(600,.08,'sine',.15),
-    pour:()=>[880,1100,1400].forEach((f,i)=>setTimeout(()=>this.note(f,.12,'sine',.12),i*50)),
-    illegal:()=>this.note(200,.12,'sine',.2),
-    solve:()=>this.note(1100,.2,'sine',.15),
-    levelWin:()=>[523,659,784,1046].forEach((f,i)=>setTimeout(()=>this.note(f,.15,'sine'),i*80)),
-  }[id]||(()=>{}))(); },
+  note(f=440,d=.1,type='sine',g=.16,when=0){ if(this.muted||!Settings.sfx) return; const a=this.ensure();
+    const t0=a.currentTime+when; const o=a.createOscillator(), gn=a.createGain(); o.type=type; o.frequency.value=f;
+    gn.gain.setValueAtTime(.0001,t0); gn.gain.exponentialRampToValueAtTime(g,t0+.012);
+    gn.gain.exponentialRampToValueAtTime(.0001,t0+d);
+    o.connect(gn).connect(a.destination); o.start(t0); o.stop(t0+d+.02); },
+  // rising pitch ladder per pour — pitch climbs with each unit
+  pourTick(step,total){ const base=520; const f=base*Math.pow(2,(step/Math.max(1,total))*0.9);
+    this.note(f,.13,'sine',.13); this.note(f*2.01,.09,'triangle',.04); },
+  solve(){ [784,1047,1319].forEach((f,i)=>this.note(f,.18,'sine',.13,i*.07)); },
+  illegal(){ this.note(150,.14,'sawtooth',.12); this.note(120,.16,'sine',.1,.02); },
+  select(){ this.note(640,.07,'sine',.1); },
+  win(){ [523,659,784,1047,1319].forEach((f,i)=>this.note(f,.3,'sine',.14,i*.09)); },
 };
-function haptic(ms){ if(Settings.haptic && navigator.vibrate) navigator.vibrate(ms); }
+function haptic(ms){ if(Settings.haptic && navigator.vibrate){ try{ navigator.vibrate(ms); }catch{} } }
 
 /* ---------- SceneManager ---------- */
 const Scenes = ['menu','how','select','pause','levelcomplete'];
 function show(id){ Scenes.forEach(s=>$('#'+s).classList.toggle('hidden', s!==id)); }
 function hideAll(){ Scenes.forEach(s=>$('#'+s).classList.add('hidden')); }
 
-/* ---------- LEVELS (20 handcrafted levels) ---------- */
-const LEVELS = [
-  // Level 1: Tutorial — 3 colors, 4 tubes, simple
-  { colors:['#FF6B9D', '#FFA500', '#00D9FF'], tubes:[['#FF6B9D','#FFA500'],['#FF6B9D'],['#FFA500'],['#00D9FF']], optimal:3, name:'Tutorial 1' },
-  // Level 2: Tutorial — 3 colors, 4 tubes
-  { colors:['#FF6B9D', '#FFA500', '#00D9FF'], tubes:[['#FF6B9D','#00D9FF'],['#FFA500'],['#FF6B9D'],['#FFA500']], optimal:4, name:'Tutorial 2' },
-  // Level 3: Tutorial — 3 colors, 4 tubes
-  { colors:['#FF6B9D', '#FFA500', '#00D9FF'], tubes:[['#FFA500','#FF6B9D','#00D9FF'],['#FFA500'],['#FF6B9D'],['#00D9FF']], optimal:5, name:'Tutorial 3' },
-  // Level 4: 4 colors, 5 tubes
-  { colors:['#FF6B9D', '#FFA500', '#00D9FF', '#39E0C8'], tubes:[['#FF6B9D','#00D9FF'],['#FFA500','#39E0C8'],['#FF6B9D'],['#FFA500','#00D9FF'],['#39E0C8']], optimal:6, name:'Easy Rush' },
-  // Level 5: 4 colors, 5 tubes
-  { colors:['#FF6B9D', '#FFA500', '#00D9FF', '#39E0C8'], tubes:[['#00D9FF','#39E0C8','#FF6B9D'],['#FFA500'],['#FF6B9D','#FFA500'],['#00D9FF'],['#39E0C8']], optimal:7, name:'Color Crush' },
-  // Level 6: 5 colors, 6 tubes
-  { colors:['#FF6B9D', '#FFA500', '#00D9FF', '#39E0C8', '#A78BFA'], tubes:[['#FF6B9D','#FFA500'],['#00D9FF','#39E0C8'],['#A78BFA','#FF6B9D'],['#FFA500','#00D9FF'],['#39E0C8'],['#A78BFA']], optimal:8, name:'Mixing' },
-  // Level 7: 5 colors, 6 tubes, deeper
-  { colors:['#FF6B9D', '#FFA500', '#00D9FF', '#39E0C8', '#A78BFA'], tubes:[['#FF6B9D','#00D9FF','#FFA500','#39E0C8'],['#A78BFA','#FF6B9D'],['#00D9FF','#FFA500'],['#39E0C8'],['#A78BFA'],['#FF6B9D']], optimal:9, name:'Stack Rush' },
-  // Level 8: 4 colors, 5 tubes, deeper stacks
-  { colors:['#FF6B9D', '#FFA500', '#00D9FF', '#39E0C8'], tubes:[['#FF6B9D','#00D9FF','#FFA500','#39E0C8'],['#FF6B9D','#00D9FF'],['#FFA500'],['#39E0C8','#FF6B9D'],['#00D9FF']], optimal:10, name:'Deep Dive' },
-  // Level 9: 5 colors, 6 tubes, prism challenge
-  { colors:['#FF6B9D', '#FFA500', '#00D9FF', '#39E0C8', '#A78BFA'], tubes:[['#FF6B9D','#FFA500','#00D9FF'],['#39E0C8','#A78BFA','#FF6B9D'],['#FFA500','#00D9FF','#39E0C8'],['#A78BFA'],['#FF6B9D'],['#FFA500']], optimal:11, name:'Prism Hint' },
-  // Level 10: 5 colors, 7 tubes
-  { colors:['#FF6B9D', '#FFA500', '#00D9FF', '#39E0C8', '#A78BFA'], tubes:[['#FF6B9D','#FFA500','#00D9FF','#39E0C8'],['#A78BFA','#FF6B9D','#FFA500'],['#00D9FF','#39E0C8'],['#A78BFA'],['#FF6B9D'],['#FFA500'],['#00D9FF']], optimal:12, name:'Cascade' },
-  // Level 11: 6 colors, 7 tubes
-  { colors:['#FF6B9D', '#FFA500', '#00D9FF', '#39E0C8', '#A78BFA', '#56D4FF'], tubes:[['#FF6B9D','#FFA500'],['#00D9FF','#39E0C8'],['#A78BFA','#56D4FF'],['#FF6B9D','#00D9FF'],['#39E0C8','#A78BFA'],['#56D4FF','#FF6B9D'],['#FFA500']], optimal:13, name:'Spectrum' },
-  // Level 12: 6 colors, 7 tubes, deeper
-  { colors:['#FF6B9D', '#FFA500', '#00D9FF', '#39E0C8', '#A78BFA', '#56D4FF'], tubes:[['#FF6B9D','#FFA500','#00D9FF','#39E0C8'],['#A78BFA','#56D4FF','#FF6B9D','#FFA500'],['#00D9FF','#39E0C8','#A78BFA'],['#56D4FF'],['#FF6B9D'],['#FFA500'],['#00D9FF']], optimal:14, name:'Prism Solve' },
-  // Level 13: 5 colors, 6 tubes, tight packing
-  { colors:['#FF6B9D', '#FFA500', '#00D9FF', '#39E0C8', '#A78BFA'], tubes:[['#FF6B9D','#FFA500','#00D9FF','#39E0C8','#A78BFA'],['#FF6B9D','#FFA500'],['#00D9FF'],['#39E0C8'],['#A78BFA'],['#FF6B9D']], optimal:11, name:'Tight Squeeze' },
-  // Level 14: 6 colors, 7 tubes, complex
-  { colors:['#FF6B9D', '#FFA500', '#00D9FF', '#39E0C8', '#A78BFA', '#56D4FF'], tubes:[['#FF6B9D','#FFA500','#00D9FF'],['#39E0C8','#A78BFA','#56D4FF'],['#FF6B9D','#FFA500','#00D9FF'],['#39E0C8','#A78BFA'],['#56D4FF'],['#FF6B9D'],['#FFA500']], optimal:15, name:'Twisted' },
-  // Level 15: 6 colors, 8 tubes
-  { colors:['#FF6B9D', '#FFA500', '#00D9FF', '#39E0C8', '#A78BFA', '#56D4FF'], tubes:[['#FF6B9D','#FFA500'],['#00D9FF','#39E0C8'],['#A78BFA','#56D4FF'],['#FF6B9D','#00D9FF'],['#39E0C8','#A78BFA'],['#56D4FF','#FF6B9D'],['#FFA500'],['#00D9FF']], optimal:16, name:'Challenge' },
-  // Level 16: 6 colors, 8 tubes, deep stacks
-  { colors:['#FF6B9D', '#FFA500', '#00D9FF', '#39E0C8', '#A78BFA', '#56D4FF'], tubes:[['#FF6B9D','#FFA500','#00D9FF','#39E0C8'],['#A78BFA','#56D4FF','#FF6B9D','#FFA500'],['#00D9FF','#39E0C8','#A78BFA','#56D4FF'],['#FF6B9D'],['#FFA500'],['#00D9FF'],['#39E0C8'],['#A78BFA']], optimal:17, name:'Elite' },
-  // Level 17: 6 colors, 8 tubes, twisted
-  { colors:['#FF6B9D', '#FFA500', '#00D9FF', '#39E0C8', '#A78BFA', '#56D4FF'], tubes:[['#FF6B9D','#FFA500','#00D9FF','#39E0C8','#A78BFA'],['#56D4FF','#FF6B9D','#FFA500','#00D9FF'],['#39E0C8','#A78BFA','#56D4FF','#FF6B9D'],['#FFA500'],['#00D9FF'],['#39E0C8'],['#A78BFA'],['#56D4FF']], optimal:18, name:'Masterpiece' },
-  // Level 18: 5 colors, 6 tubes, ultra tight
-  { colors:['#FF6B9D', '#FFA500', '#00D9FF', '#39E0C8', '#A78BFA'], tubes:[['#FF6B9D','#FFA500','#00D9FF','#39E0C8','#A78BFA','?'],['#FF6B9D','#FFA500','#00D9FF'],['#39E0C8'],['#A78BFA'],['#FF6B9D'],['#FFA500']], optimal:12, name:'Prism Master' },
-  // Level 19: 6 colors, 7 tubes, prism mechanic
-  { colors:['#FF6B9D', '#FFA500', '#00D9FF', '#39E0C8', '#A78BFA', '#56D4FF'], tubes:[['#FF6B9D','#FFA500','#00D9FF'],['#39E0C8','#A78BFA','#56D4FF','#FF6B9D'],['#FFA500','#00D9FF','#39E0C8'],['#A78BFA'],['#56D4FF'],['#FF6B9D'],['#FFA500']], optimal:16, name:'Chromatic' },
-  // Level 20: Final challenge — 6 colors, 8 tubes
-  { colors:['#FF6B9D', '#FFA500', '#00D9FF', '#39E0C8', '#A78BFA', '#56D4FF'], tubes:[['#FF6B9D','#FFA500','#00D9FF','#39E0C8'],['#A78BFA','#56D4FF','#FF6B9D','#FFA500'],['#00D9FF','#39E0C8','#A78BFA','#56D4FF'],['#FF6B9D','#FFA500','#00D9FF'],['#39E0C8'],['#A78BFA'],['#56D4FF'],['#FF6B9D']], optimal:19, name:'Zenith' },
-];
+/* ---------- Rules (shared with generator) ---------- */
+const effMatch = (a,b)=> a===b || a===PRISM || b===PRISM;
+function topRun(t){ if(!t.length) return null; const v=t[t.length-1]; let c=0;
+  for(let i=t.length-1;i>=0&&t[i]===v;i--) c++; return {v,c}; }
+function canPour(s,t){ if(!s.length) return false; if(t.length>=CAP) return false;
+  if(t.length===0) return true; return effMatch(s[s.length-1], t[t.length-1]); }
+function isSolvedTube(t){ if(t.length!==CAP) return false; let base=null;
+  for(const u of t){ if(u===PRISM) continue; if(base===null) base=u; else if(u!==base) return false; } return true; }
+function isWin(tubes){ return tubes.every(t=>t.length===0||isSolvedTube(t)); }
 
 /* ---------- State ---------- */
 const S = {
-  mode:'menu',
-  currentLevel:0,
-  tubes:[],
-  selected:null,
-  pours:0,
-  history:[],
-  stars:Save.get('stars',[]),
+  mode:'menu', currentLevel:0,
+  tubes:[], selected:null,
+  pours:0, history:[],
+  stars: Save.get('stars', []),
+  layout:[],           // per-tube {cx, top, tw, h}
+  anim:null,           // active pour animation
+  particles:[],
+  solvedFlash:{},      // tubeIdx -> time of solve glow
 };
-
-// Initialize stars array if missing
-if(S.stars.length<LEVELS.length) S.stars = new Array(LEVELS.length).fill(0);
+if(!Array.isArray(S.stars) || S.stars.length < LEVELS.length){
+  const arr = new Array(LEVELS.length).fill(0);
+  if(Array.isArray(S.stars)) S.stars.forEach((v,i)=>{ if(i<arr.length) arr[i]=v; });
+  S.stars = arr;
+}
 
 /* ---------- Canvas ---------- */
 const cv = $('#cv'), ctx = cv.getContext('2d'); let W=0,H=0,DPR=1;
 function resize(){ const r=cv.getBoundingClientRect(); DPR=Math.min(devicePixelRatio||1,2);
-  cv.width=r.width*DPR; cv.height=r.height*DPR; W=r.width; H=r.height; ctx.setTransform(DPR,0,0,DPR,0,0); }
+  cv.width=Math.round(r.width*DPR); cv.height=Math.round(r.height*DPR); W=r.width; H=r.height;
+  ctx.setTransform(DPR,0,0,DPR,0,0); layout(); }
 addEventListener('resize', resize);
 
-/* ---------- GAME LOGIC ---------- */
-function startLevel(lvlIdx){
-  S.currentLevel = lvlIdx;
-  const lvl = LEVELS[lvlIdx];
-  S.tubes = lvl.tubes.map(t=>[...t]);
+/* ---------- Layout (1 or 2 rows, centered) ---------- */
+function layout(){
+  const n = S.tubes.length; if(!n){ S.layout=[]; return; }
+  const top0 = (parseFloat(getComputedStyle(document.documentElement).fontSize)||16); // unused base
+  const topReserve = 96, botReserve = 96;
+  const usable = Math.max(120, H - topReserve - botReserve);
+  const rows = n<=5 ? 1 : 2;
+  const maxPerRow = Math.ceil(n/rows);
+  const rowGap = 22;
+  const tubeH = rows===1 ? Math.min(280, usable) : Math.min(216, (usable - rowGap)/2);
+  const slotW = W / maxPerRow;
+  const tw = Math.min(58, slotW*0.62);
+  const blockH = rows*tubeH + (rows-1)*rowGap;
+  const offY = topReserve + (usable - blockH)/2;
+  const lay = [];
+  let idx = 0;
+  for(let r=0;r<rows;r++){
+    const itemsInRow = (r<rows-1) ? maxPerRow : (n - maxPerRow*(rows-1));
+    const rowW = itemsInRow*slotW;
+    const startCx = (W - rowW)/2 + slotW/2;
+    const top = offY + r*(tubeH + rowGap);
+    for(let k=0;k<itemsInRow;k++){
+      lay[idx] = { cx: startCx + k*slotW, top, tw, h: tubeH };
+      idx++;
+    }
+  }
+  S.layout = lay;
+}
+
+/* ---------- Easing ---------- */
+const easeInOut = t => t<.5 ? 4*t*t*t : 1-Math.pow(-2*t+2,3)/2;
+const clamp01 = t => t<0?0:t>1?1:t;
+function now(){ return performance.now(); }
+
+/* ---------- Drawing helpers ---------- */
+function tubePath(p, x, y, w, h){
+  const r = Math.min(11, w*0.42);
+  p.beginPath();
+  p.moveTo(x, y);                       // open mouth (square top)
+  p.lineTo(x, y+h-r);
+  p.quadraticCurveTo(x, y+h, x+r, y+h);
+  p.lineTo(x+w-r, y+h);
+  p.quadraticCurveTo(x+w, y+h, x+w, y+h-r);
+  p.lineTo(x+w, y);
+}
+function colorAt(color, x, y, w, h, t){
+  if(color===PRISM){
+    const g = ctx.createLinearGradient(x, y, x, y+h);
+    const sh = (t*0.00012)%1;
+    for(let i=0;i<=6;i++){ const hue=((i/6 + sh)%1)*360; g.addColorStop(i/6, `hsl(${hue} 90% 62%)`); }
+    return g;
+  }
+  const g = ctx.createLinearGradient(x, y, x, y+h);
+  g.addColorStop(0, shade(color, 16));
+  g.addColorStop(.5, color);
+  g.addColorStop(1, shade(color, -14));
+  return g;
+}
+function shade(hex, amt){
+  const m = hex.replace('#',''); const n=parseInt(m,16);
+  let r=(n>>16)&255, g=(n>>8)&255, b=n&255;
+  r=Math.max(0,Math.min(255,r+amt)); g=Math.max(0,Math.min(255,g+amt)); b=Math.max(0,Math.min(255,b+amt));
+  return `rgb(${r},${g},${b})`;
+}
+// draw a tube's glass + a given list of units (bottom->top), with optional top-cell fractional fill
+function drawTubeContents(p, w, h, units, opts={}){
+  const pad = 3.5;
+  const innerW = w - pad*2;
+  const cellH = (h - pad*2) / CAP;
+  const topFrac = opts.topFrac==null ? 1 : opts.topFrac;
+  // clip to tube interior so liquid corners look contained
+  p.save();
+  tubePath(p, 0, 0, w, h); p.clip();
+  for(let i=0;i<units.length;i++){
+    const color = units[i];
+    const frac = (i===units.length-1) ? topFrac : 1;
+    const cyBottom = h - pad - cellH*i;
+    const ch = cellH*frac;
+    const cy = cyBottom - ch;
+    const cx = pad;
+    p.fillStyle = colorAt(color, cx, cy, innerW, ch, opts.time||0);
+    p.fillRect(cx, cy, innerW, ch);
+    // surface meniscus highlight
+    p.fillStyle = 'rgba(255,255,255,.16)';
+    p.fillRect(cx, cy, innerW, Math.min(3, ch));
+    // left gloss
+    p.fillStyle = 'rgba(255,255,255,.10)';
+    p.fillRect(cx+1.5, cy, 3, ch);
+  }
+  p.restore();
+}
+function drawTubeGlass(p, w, h, hot){
+  // glass body
+  tubePath(p, 0, 0, w, h);
+  p.fillStyle = 'rgba(150,200,215,.06)';
+  p.fill();
+  // rim
+  p.lineWidth = hot ? 3 : 2;
+  p.strokeStyle = hot ? '#39e0c8' : 'rgba(150,200,215,.32)';
+  if(hot){ p.shadowColor='#39e0c8'; p.shadowBlur=16; }
+  p.stroke();
+  p.shadowBlur = 0;
+  // mouth lip
+  p.strokeStyle = hot ? '#7af0df' : 'rgba(180,220,235,.45)';
+  p.lineWidth = 2.5;
+  p.beginPath(); p.moveTo(0,0); p.lineTo(w,0); p.stroke();
+  // vertical shine
+  p.fillStyle='rgba(255,255,255,.06)'; p.fillRect(w*0.16, 4, 3, h-12);
+}
+
+/* ---------- Main render ---------- */
+function render(){
+  const t = now();
+  ctx.clearRect(0,0,W,H);
+  const a = S.anim;
+
+  for(let i=0;i<S.tubes.length;i++){
+    const L = S.layout[i]; if(!L) continue;
+    const isSrc = a && a.i===i;
+    if(isSrc) continue; // animated source drawn last (on top)
+
+    // units to draw (target gains units mid-pour)
+    let units = S.tubes[i];
+    let topFrac = 1;
+    if(a && a.j===i){
+      const pu = a.pouredUnits;
+      units = S.tubes[i].concat(a.color ? new Array(pu).fill(a.color) : []);
+      topFrac = a.landFrac;  // top landing cell rises
+    }
+    const lift = (S.selected===i && !a) ? -14 : 0;
+    drawTubeAt(L.cx - L.tw/2, L.top + lift, L.tw, L.h, units, {
+      hot: S.selected===i || isSolvedTube(S.tubes[i]),
+      solved: isSolvedTube(S.tubes[i]),
+      time:t, topFrac, idx:i,
+    });
+  }
+
+  // animated source (tilted) + stream
+  if(a) drawPourAnim(a, t);
+
+  // particles
+  drawParticles(t);
+}
+
+function drawTubeAt(x, top, w, h, units, opts){
+  ctx.save();
+  ctx.translate(x, top);
+  // solved pulse ring
+  if(opts.solved){
+    const pulse = 0.5+0.5*Math.sin(now()*0.005 + (opts.idx||0));
+    ctx.save(); tubePath(ctx,0,0,w,h);
+    ctx.strokeStyle = `rgba(57,224,200,${0.35+0.4*pulse})`;
+    ctx.lineWidth=3; ctx.shadowColor='#39e0c8'; ctx.shadowBlur=18+10*pulse; ctx.stroke(); ctx.restore();
+  }
+  drawTubeContents(ctx, w, h, units, opts);
+  drawTubeGlass(ctx, w, h, opts.hot);
+  ctx.restore();
+}
+
+function drawPourAnim(a, t){
+  const Ls = S.layout[a.i], Lt = S.layout[a.j];
+  const dir = Math.sign((Lt.cx) - (Ls.cx)) || 1;   // +1 pour right, -1 pour left
+  const w=Ls.tw, h=Ls.h;
+  // phase progress
+  const tl = a.lift, tp = a.pour, tr = a.ret;
+  const e = t - a.t0;
+  let liftP=0, pourP=0, retP=0;
+  if(e < tl){ liftP = e/tl; }
+  else if(e < tl+tp){ liftP=1; pourP=(e-tl)/tp; }
+  else { liftP=1; pourP=1; retP=Math.min(1,(e-tl-tp)/tr); }
+
+  // poured units / landing fraction (for target render)
+  const pu = Math.min(a.amount, Math.floor(pourP*a.amount + 1e-6));
+  a.pouredUnits = pu;
+  const within = (pourP*a.amount) - pu; // 0..1 progress of current landing unit
+  a.landFrac = within>0 ? within : 1;
+  // play rising tick per landed unit
+  if(pu > a._lastUnit){ a._lastUnit=pu; Audio.pourTick(a.startCount - (a.amount-pu) + (pu), a.tubeTotalForPitch); haptic(8); }
+
+  // source remaining units (top ones removed as they pour)
+  const remain = a.srcUnits.slice(0, a.srcUnits.length - pu);
+
+  // pour pose: spout corner anchored near target mouth
+  const spoutLocalX = dir>0 ? w : 0;     // which top corner is the spout
+  const tiltMax = dir>0 ? 1.0 : -1.0;    // radians
+  const eIO = easeInOut(Math.max(liftP, retP>0 ? 1-retP : liftP));
+  // interpolate pose: base -> pour pose
+  const poseT = retP>0 ? (1-easeInOut(retP)) : easeInOut(liftP);
+  const baseSpoutX = Ls.cx + (spoutLocalX - w/2);
+  const baseSpoutY = Ls.top;
+  const poolMouthX = Lt.cx + (dir>0 ? -Lt.tw*0.5 : Lt.tw*0.5);
+  const poolMouthY = Lt.top - 6;
+  const spoutX = baseSpoutX + (poolMouthX - baseSpoutX)*poseT;
+  const spoutY = baseSpoutY + (poolMouthY - baseSpoutY)*poseT;
+  const angle = tiltMax*poseT;
+
+  // draw stream (behind source) while actively pouring
+  if(pourP>0 && pourP<1 && pu < a.amount){
+    const surfaceY = targetSurfaceY(a.j, pu);
+    drawStream(spoutX, spoutY, surfaceY, a.color, t);
+  }
+
+  // draw tilted source
+  ctx.save();
+  ctx.translate(spoutX, spoutY);
+  ctx.rotate(angle);
+  ctx.translate(-spoutLocalX, 0);
+  drawTubeContents(ctx, w, h, remain, {time:t, topFrac:1, idx:a.i});
+  drawTubeGlass(ctx, w, h, true);
+  ctx.restore();
+
+  // finish
+  if(retP>=1){ commitPour(a); }
+}
+
+function targetSurfaceY(j, extra){
+  const L = S.layout[j];
+  const filled = S.tubes[j].length + extra;
+  const pad=3.5, cellH=(L.h-pad*2)/CAP;
+  return L.top + L.h - pad - cellH*filled;
+}
+function drawStream(x0, y0, y1, color, t){
+  const x1 = x0 + Math.sin(t*0.02)*1.5;
+  ctx.save();
+  ctx.strokeStyle = color===PRISM ? `hsl(${(t*0.2)%360} 90% 62%)` : color;
+  ctx.shadowColor = ctx.strokeStyle; ctx.shadowBlur=10;
+  ctx.lineWidth=5.5; ctx.lineCap='round';
+  ctx.beginPath();
+  ctx.moveTo(x0, y0);
+  ctx.quadraticCurveTo((x0+x1)/2+2, (y0+y1)/2, x1, Math.max(y1,y0+8));
+  ctx.stroke();
+  // droplet shimmer
+  ctx.shadowBlur=0; ctx.fillStyle='rgba(255,255,255,.5)';
+  ctx.beginPath(); ctx.arc(x1, Math.max(y1,y0+8), 2.4, 0, 7); ctx.fill();
+  ctx.restore();
+}
+
+/* ---------- Particles (sparkles) ---------- */
+function spawnSparkle(x,y,color,nn=14){
+  for(let i=0;i<nn;i++){ const a=Math.random()*7, sp=40+Math.random()*120;
+    S.particles.push({ x,y, vx:Math.cos(a)*sp, vy:Math.sin(a)*sp-40, life:1, color, t:now() }); }
+}
+function drawParticles(t){
+  if(!S.particles.length) return;
+  S.particles = S.particles.filter(p=>{
+    const dt = (t - p.t)/1000; p.t=t;
+    p.vy += 260*dt; p.x += p.vx*dt; p.y += p.vy*dt; p.life -= dt*0.9;
+    if(p.life<=0) return false;
+    ctx.globalAlpha = Math.max(0,p.life);
+    ctx.fillStyle = p.color===PRISM ? `hsl(${(t*0.3+p.x)%360} 90% 65%)` : p.color;
+    ctx.shadowColor = ctx.fillStyle; ctx.shadowBlur=8;
+    ctx.beginPath(); ctx.arc(p.x,p.y, 2.6*p.life+0.6, 0, 7); ctx.fill();
+    ctx.shadowBlur=0; ctx.globalAlpha=1;
+    return true;
+  });
+}
+
+/* ---------- Pour logic + animation kickoff ---------- */
+function tryPour(i, j){
+  const s=S.tubes[i], t=S.tubes[j];
+  if(!canPour(s,t)){ Audio.illegal(); haptic(30); flashDeny(j); return false; }
+  // compute amount
+  const run = topRun(s); const space=CAP - t.length;
+  const amount = Math.min(run.c, space);
+  // snapshot for undo (deep copy)
+  S.history.push({ tubes:S.tubes.map(x=>x.slice()), pours:S.pours });
+  // start animation; tubes mutate on commit
+  S.anim = {
+    i, j, color: run.v, amount,
+    srcUnits: s.slice(),
+    t0: now(),
+    lift: 200, pour: Math.max(220, amount*150), ret: 200,
+    pouredUnits:0, landFrac:1, _lastUnit:0,
+    startCount: t.length, tubeTotalForPitch: t.length+amount,
+  };
   S.selected = null;
-  S.pours = 0;
-  S.history = [];
-  S.mode = 'playing';
-  updateHUD();
-  hideAll();
-  resize();
   Audio.ensure();
-}
-
-function getTopColor(tube){
-  if(!tube || tube.length===0) return null;
-  return tube[tube.length-1];
-}
-
-function getSpaceInTube(tube){
-  return TUBE_CAPACITY - tube.length;
-}
-
-function isTubeSolved(tube){
-  if(tube.length !== TUBE_CAPACITY) return false;
-  const first = tube[0];
-  return tube.every(c=>c===first);
-}
-
-function canPour(sourceTube, targetTube){
-  if(!sourceTube || sourceTube.length===0) return false;
-  if(targetTube.length===TUBE_CAPACITY) return false;
-  if(targetTube.length===0) return true;
-  return getTopColor(sourceTube)===getTopColor(targetTube);
-}
-
-function pour(sourceIdx, targetIdx){
-  const src = S.tubes[sourceIdx];
-  const tgt = S.tubes[targetIdx];
-
-  if(!canPour(src, tgt)) return false;
-
-  // Save history
-  S.history.push([...S.tubes.map(t=>[...t])]);
-
-  // Pour top color from source to target
-  const srcColor = src[src.length-1];
-  const srcCount = src.filter(c=>c===srcColor).length;
-  const space = getSpaceInTube(tgt);
-  const amount = Math.min(srcCount, space);
-
-  for(let i=0; i<amount; i++){
-    tgt.push(src.pop());
-  }
-
-  S.pours++;
-  S.selected = null;
-  Audio.sfx('pour');
-  haptic(10);
-
-  // Check if solved
-  if(isTubeSolved(tgt)){
-    Audio.sfx('solve');
-    haptic([20,10,20]);
-  }
-
-  // Check win
-  if(S.tubes.every(t=>isTubeSolved(t))){
-    levelWin();
-  }
-
+  updateUndo();
   return true;
 }
-
-function undoMove(){
-  if(S.history.length===0) return;
-  S.tubes = S.history.pop();
-  S.pours = Math.max(0, S.pours-1);
-  S.selected = null;
-  Audio.note(400,.08,'sine',.12);
-  haptic(8);
+function commitPour(a){
+  // apply the move to real state
+  const run = topRun(S.tubes[a.i]); const space=CAP - S.tubes[a.j].length;
+  const amt = Math.min(run.c, space);
+  for(let k=0;k<amt;k++) S.tubes[a.j].push(S.tubes[a.i].pop());
+  S.pours++;
+  S.anim = null;
+  updateHUD();
+  // solved tube feedback
+  if(isSolvedTube(S.tubes[a.j])){
+    Audio.solve(); haptic([14,8,14]);
+    const L=S.layout[a.j]; spawnSparkle(L.cx, L.top+L.h*0.3, S.tubes[a.j][0]||'#39e0c8', 16);
+  }
+  if(isWin(S.tubes)) levelWin();
 }
+function flashDeny(j){ /* brief shake handled by selection clear; could add */ }
 
+/* ---------- Undo / Restart ---------- */
+function undoMove(){
+  if(S.anim || !S.history.length) return;
+  const last = S.history.pop();
+  S.tubes = last.tubes; S.pours = last.pours; S.selected=null;
+  Audio.note(360,.1,'sine',.1); haptic(8);
+  updateHUD(); updateUndo();
+}
+function restartLevel(){ if(S.anim) return; startLevel(S.currentLevel); }
+
+/* ---------- Level flow ---------- */
+function startLevel(idx){
+  S.currentLevel = idx;
+  const lvl = LEVELS[idx];
+  S.tubes = lvl.tubes.map(t=>t.slice());
+  S.selected=null; S.pours=0; S.history=[]; S.anim=null; S.particles=[]; S.solvedFlash={};
+  S.mode='playing';
+  resize();          // recompute layout for this tube count
+  hideAll();
+  updateHUD(); updateUndo();
+  Audio.ensure();
+}
 function levelWin(){
   const lvl = LEVELS[S.currentLevel];
-  const stars = S.pours <= lvl.optimal ? 3 : S.pours <= Math.ceil(lvl.optimal*1.3) ? 2 : 1;
-  if(stars > (S.stars[S.currentLevel]||0)){
-    S.stars[S.currentLevel] = stars;
-    Save.set('stars', S.stars);
-  }
-
-  S.mode = 'levelcomplete';
-  const starsStr = '⭐'.repeat(stars) + '☆'.repeat(3-stars);
-  $('#compStars').textContent = starsStr;
+  const stars = S.pours<=lvl.optimal ? 3 : S.pours<=Math.ceil(lvl.optimal*1.3) ? 2 : 1;
+  if(stars > (S.stars[S.currentLevel]||0)){ S.stars[S.currentLevel]=stars; Save.set('stars', S.stars); }
+  S.mode='levelcomplete';
+  // celebratory burst
+  for(const L of S.layout){ if(L) spawnSparkle(L.cx, L.top+L.h*0.4, '#39e0c8', 6); }
+  $('#compStars').textContent = '⭐'.repeat(stars)+'☆'.repeat(3-stars);
   $('#compPours').textContent = S.pours;
   $('#compBest').textContent = lvl.optimal;
-  Audio.sfx('levelWin');
-  haptic([20,30,20,30,40]);
-  show('levelcomplete');
+  $('#compKick').textContent = stars===3 ? 'Perfect!' : 'Level Complete';
+  $('#nextBtn').textContent = (S.currentLevel+1<LEVELS.length) ? '▶ Next Level' : '✔ Finish';
+  Audio.win(); haptic([20,30,20,30,50]);
+  setTimeout(()=>show('levelcomplete'), 520);  // let the final pour & sparkle land first
 }
 
 /* ---------- HUD ---------- */
 function updateHUD(){
-  $('#lvlChip').firstChild.textContent = S.currentLevel+1;
+  const lvl = LEVELS[S.currentLevel];
+  $('#lvlChip').firstChild.textContent = 'Level '+(S.currentLevel+1);
+  $('#lvlName').textContent = lvl ? lvl.name : '';
+  $('#pourChip').querySelector('b').textContent = S.pours;
+  $('#targetPours').textContent = lvl ? lvl.optimal : 0;
 }
-
-/* ---------- Rendering ---------- */
-function drawGame(){
-  ctx.clearRect(0,0,W,H);
-
-  const tubeCount = S.tubes.length;
-  const tubeWidth = (W-40) / tubeCount;
-  const tubeHeight = 200;
-  const tubeX0 = 20;
-  const tubeY0 = (H-tubeHeight)/2;
-
-  for(let i=0; i<tubeCount; i++){
-    const tube = S.tubes[i];
-    const x = tubeX0 + i*tubeWidth;
-    const y = tubeY0;
-
-    // Draw tube body (glass)
-    ctx.fillStyle = i===S.selected ? '#39e0c866' : 'rgba(100,180,200,.15)';
-    ctx.strokeStyle = i===S.selected ? '#39e0c8' : 'rgba(100,180,200,.3)';
-    ctx.lineWidth = i===S.selected ? 3 : 2;
-    const cornerRadius = 8;
-    const tubeBW = tubeWidth*0.7;
-    const tubeTx = x + tubeWidth/2 - tubeBW/2;
-
-    // Rounded rect for tube
-    ctx.beginPath();
-    ctx.moveTo(tubeTx+cornerRadius, y);
-    ctx.lineTo(tubeTx+tubeBW-cornerRadius, y);
-    ctx.quadraticCurveTo(tubeTx+tubeBW, y, tubeTx+tubeBW, y+cornerRadius);
-    ctx.lineTo(tubeTx+tubeBW, y+tubeHeight-cornerRadius);
-    ctx.quadraticCurveTo(tubeTx+tubeBW, y+tubeHeight, tubeTx+tubeBW-cornerRadius, y+tubeHeight);
-    ctx.lineTo(tubeTx+cornerRadius, y+tubeHeight);
-    ctx.quadraticCurveTo(tubeTx, y+tubeHeight, tubeTx, y+tubeHeight-cornerRadius);
-    ctx.lineTo(tubeTx, y+cornerRadius);
-    ctx.quadraticCurveTo(tubeTx, y, tubeTx+cornerRadius, y);
-    ctx.closePath();
-    ctx.fill();
-    ctx.stroke();
-
-    // Draw liquids
-    const liquidH = (tubeHeight*0.85) / TUBE_CAPACITY;
-    for(let j=0; j<tube.length; j++){
-      const color = tube[j];
-      ctx.fillStyle = color;
-      ctx.shadowColor = color;
-      ctx.shadowBlur = 12;
-      ctx.fillRect(tubeTx+3, y+tubeHeight-liquidH*(j+1)-3, tubeBW-6, liquidH-1);
-      ctx.shadowBlur = 0;
-    }
-
-    // Solved glow
-    if(isTubeSolved(tube)){
-      ctx.strokeStyle = '#39e0c8';
-      ctx.lineWidth = 2;
-      ctx.shadowColor = '#39e0c8';
-      ctx.shadowBlur = 20;
-      ctx.stroke();
-      ctx.shadowBlur = 0;
-    }
-
-    // Tube label
-    ctx.fillStyle = '#aaa';
-    ctx.font = '12px sans-serif';
-    ctx.textAlign = 'center';
-    ctx.fillText(i+1, x+tubeWidth/2, y+tubeHeight+20);
-  }
-}
+function updateUndo(){ $('#undoBtn').disabled = (S.history.length===0); }
+function setControlsVisible(v){ $('#controls').style.display = v?'flex':'none'; }
 
 /* ---------- Input ---------- */
+function tubeAtPoint(px, py){
+  for(let i=0;i<S.tubes.length;i++){
+    const L=S.layout[i]; if(!L) continue;
+    const x=L.cx-L.tw/2, y=L.top - (S.selected===i?14:0);
+    // generous hit padding
+    if(px>=x-8 && px<=x+L.tw+8 && py>=y-10 && py<=y+L.h+14) return i;
+  }
+  return -1;
+}
 cv.addEventListener('pointerdown', e=>{
-  if(S.mode!=='playing') return;
-  const r = cv.getBoundingClientRect();
-  const px = e.clientX - r.left;
-  const py = e.clientY - r.top;
-
-  const tubeCount = S.tubes.length;
-  const tubeWidth = (W-40) / tubeCount;
-  const tubeX0 = 20;
-  const tubeY0 = (H-200)/2;
-
-  for(let i=0; i<tubeCount; i++){
-    const x = tubeX0 + i*tubeWidth;
-    const y = tubeY0;
-    const tubeBW = tubeWidth*0.7;
-    const tubeTx = x + tubeWidth/2 - tubeBW/2;
-
-    if(px>=tubeTx && px<tubeTx+tubeBW && py>=y && py<y+200){
-      if(S.selected===null){
-        S.selected = i;
-        Audio.sfx('select');
-        haptic(8);
-      } else if(S.selected===i){
-        S.selected = null;
-      } else {
-        if(!pour(S.selected, i)){
-          Audio.sfx('illegal');
-          haptic(30);
-        }
-      }
-      return;
-    }
+  if(S.mode!=='playing' || S.anim) return;
+  Audio.ensure();
+  const r=cv.getBoundingClientRect();
+  const i = tubeAtPoint(e.clientX-r.left, e.clientY-r.top);
+  if(i<0){ S.selected=null; return; }
+  if(S.selected===null){
+    if(S.tubes[i].length===0) return;        // can't pick an empty tube
+    S.selected=i; Audio.select(); haptic(6);
+  } else if(S.selected===i){
+    S.selected=null;
+  } else {
+    const src=S.selected; S.selected=null;
+    tryPour(src, i);
   }
 });
-
 addEventListener('keydown', e=>{
-  if(e.key==='Escape'){
-    if(S.mode==='playing') S.mode='paused';
-    else if(S.mode==='paused') S.mode='playing';
-    S.mode==='paused'?show('pause'):hideAll();
-  }
-  if(e.key==='u') undoMove();
+  if(e.key==='Escape'){ if(S.mode==='playing'){S.mode='paused';show('pause');} else if(S.mode==='paused'){S.mode='playing';hideAll();} }
+  if((e.key==='u'||e.key==='z') && S.mode==='playing') undoMove();
+  if(e.key==='r' && S.mode==='playing') restartLevel();
 });
 
 /* ---------- Main loop ---------- */
-let last=0;
-function loop(now){
-  const dt = Math.min((now-(last||now))/1000, 0.05); last=now;
-  if(S.mode==='playing') drawGame();
-  requestAnimationFrame(loop);
-}
+function loop(){ if(S.mode==='playing'||S.mode==='levelcomplete') render(); requestAnimationFrame(loop); }
 requestAnimationFrame(loop);
 
-/* ---------- UI Handlers ---------- */
+/* ---------- Menu / Level select ---------- */
 function updateMenu(){
-  const completed = S.stars.filter(s=>s>0).length;
+  const solved = S.stars.filter(s=>s>0).length;
   const total = S.stars.reduce((a,b)=>a+b,0);
-  $('#menuLevels').textContent = completed+'/'+LEVELS.length;
-  $('#menuStars').textContent = total;
+  $('#menuLevels').textContent = solved+'/'+LEVELS.length;
+  $('#menuStars').textContent = total+' / '+(LEVELS.length*3);
 }
-
 function buildLevelGrid(){
-  const grid = $('#lvlGrid');
-  grid.innerHTML = '';
-  LEVELS.forEach((lvl, i)=>{
-    const card = document.createElement('div');
-    card.className = 'lvlCard';
-    const stars = S.stars[i]||0;
-    card.innerHTML = `<div class="num">${i+1}</div><div class="stars">${'⭐'.repeat(stars)}${'☆'.repeat(3-stars)}</div>`;
-    card.onclick = ()=>{ startLevel(i); Audio.ensure(); };
+  const grid=$('#lvlGrid'); grid.innerHTML='';
+  LEVELS.forEach((lvl,i)=>{
+    const stars=S.stars[i]||0;
+    const card=document.createElement('div');
+    card.className='lvlCard';
+    card.innerHTML = `${lvl.prism?'<span class="pz">🌈</span>':''}<div class="num">${i+1}</div><div class="stars">${'⭐'.repeat(stars)}${'·'.repeat(3-stars)}</div>`;
+    card.onclick=()=>{ Audio.ensure(); startLevel(i); };
     grid.appendChild(card);
   });
 }
 
-$('#playBtn').onclick = ()=>{
-  if(!Save.get('onboarded',false)){
-    Save.set('onboarded',true);
-    show('how');
-  } else {
-    buildLevelGrid();
-    show('select');
-  }
-};
-
-$('#howBtn').onclick = ()=> show('how');
-$('#howOk').onclick = ()=>{ buildLevelGrid(); show('select'); };
+/* ---------- Wire UI ---------- */
+$('#playBtn').onclick = ()=>{ if(!Save.get('onboarded',false)){ Save.set('onboarded',true); show('how'); } else { buildLevelGrid(); show('select'); } };
+$('#howBtn').onclick  = ()=> show('how');
+$('#howOk').onclick   = ()=>{ buildLevelGrid(); show('select'); };
 $('#selectBack').onclick = ()=>{ updateMenu(); show('menu'); };
-
-$('#pauseBtn').onclick = ()=>{
-  if(S.mode==='playing'){ S.mode='paused'; show('pause'); }
-  else if(S.mode==='paused'){ S.mode='playing'; hideAll(); }
-};
-
+$('#pauseBtn').onclick = ()=>{ if(S.mode==='playing'){S.mode='paused';show('pause');} else if(S.mode==='paused'){S.mode='playing';hideAll();} };
 $('#resumeBtn').onclick = ()=>{ S.mode='playing'; hideAll(); };
 $('#restartBtn').onclick = ()=>{ startLevel(S.currentLevel); };
 $('#quitBtn').onclick = ()=>{ S.mode='menu'; updateMenu(); show('menu'); };
 $('#retryBtn').onclick = ()=>{ startLevel(S.currentLevel); };
-$('#nextBtn').onclick = ()=>{
-  if(S.currentLevel+1<LEVELS.length){
-    startLevel(S.currentLevel+1);
-  } else {
-    S.mode='menu';
-    updateMenu();
-    show('menu');
-  }
-};
+$('#nextBtn').onclick = ()=>{ if(S.currentLevel+1<LEVELS.length){ startLevel(S.currentLevel+1); } else { S.mode='menu'; updateMenu(); buildLevelGrid(); show('select'); } };
+$('#undoBtn').onclick = undoMove;
+$('#restartBtn2').onclick = restartLevel;
+$('#muteBtn').onclick = ()=>{ Audio.muted=!Audio.muted; Save.set('muted',Audio.muted); $('#muteBtn').textContent=Audio.muted?'🔇':'🔊'; Audio.ensure(); };
 
-$('#muteBtn').onclick = ()=>{
-  Audio.muted = !Audio.muted;
-  Save.set('muted', Audio.muted);
-  $('#muteBtn').textContent = Audio.muted?'🔇':'🔊';
-  Audio.ensure();
-};
+function bindSwitch(el,key){ const sw=$(el); const sync=()=>sw.classList.toggle('on',Settings[key]); sync();
+  sw.onclick=()=>{ Settings[key]=!Settings[key]; Settings.save(); sync(); }; }
+bindSwitch('#swMusic','music'); bindSwitch('#swSfx','sfx'); bindSwitch('#swHaptic','haptic');
 
-function bindSwitch(el, key){
-  const sw = $(el);
-  const sync = ()=> sw.classList.toggle('on', Settings[key]);
-  sync();
-  sw.onclick = ()=>{ Settings[key] = !Settings[key]; Settings.save(); sync(); };
-}
-bindSwitch('#swMusic','music');
-bindSwitch('#swSfx','sfx');
-bindSwitch('#swHaptic','haptic');
+/* show/hide controls bar with scene */
+const _origShow = show;
+function refreshControls(){ setControlsVisible(S.mode==='playing'); }
+const obs = setInterval(refreshControls, 120);
 
 /* ---------- Boot ---------- */
 resize();
 $('#muteBtn').textContent = Audio.muted?'🔇':'🔊';
-updateMenu();
-show('menu');
+updateMenu(); updateHUD(); updateUndo(); show('menu'); setControlsVisible(false);
 
 /* DEV helpers */
 window._S = S;
-window._startLevel = (idx)=>startLevel(idx);
+window._lvl = (i)=>startLevel(i);
+window._win = ()=>{ S.tubes = LEVELS[S.currentLevel].tubes.map(t=>t.slice()); /* not auto-solve */ };
 </script>
 </body>
 </html>
